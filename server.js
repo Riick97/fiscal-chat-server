@@ -1,24 +1,43 @@
-const express = require('express');
-const bodyParser = require('body-parser');
-const { getTokenEmmiter } = require('./components/util'); 
+const express = require("express");
+const bodyParser = require("body-parser");
+const cors = require("cors");
+const { getTokenEmmiter } = require("./components/util");
 
 const app = express();
 const port = 3000; // You can change this as needed
 
+// CORS configuration
+const corsOptions = {
+  origin: "*", // Allow all origins
+  methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
+  credentials: true,
+  optionsSuccessStatus: 204,
+  allowedHeaders: ["Content-Type", "Authorization"],
+};
+
+// Apply CORS middleware
+app.use(cors(corsOptions));
+
+// Add OPTIONS handling for preflight requests
+app.options("*", cors(corsOptions));
+
 // Middleware to parse raw JSON
-app.use(bodyParser.raw({ type: 'application/json' }));
+app.use(bodyParser.raw({ type: "application/json" }));
 
 app.get("/", (req, res) => {
   res.json({ message: "Welcome to your Node.js server!" });
- });
+});
 
 // Endpoint for handling streaming
-app.post('/stream', async (req, res) => {
-  // Set headers for Server-Sent Events (SSE)
+app.post("/stream", async (req, res) => {
+  // Set headers for Server-Sent Events (SSE) and CORS
   res.writeHead(200, {
-    'Content-Type': 'text/event-stream',
-    'Cache-Control': 'no-cache, no-transform',
-    'Connection': 'keep-alive',
+    "Content-Type": "text/event-stream",
+    "Cache-Control": "no-cache, no-transform",
+    Connection: "keep-alive",
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type",
   });
 
   const sendData = (data) => {
@@ -34,8 +53,8 @@ app.post('/stream', async (req, res) => {
   try {
     body = JSON.parse(req.body.toString());
   } catch (error) {
-    console.error('Error parsing request body:', error);
-    sendData(JSON.stringify({ error: 'Invalid request body' }));
+    console.error("Error parsing request body:", error);
+    sendData(JSON.stringify({ error: "Invalid request body" }));
     res.end();
     return;
   }
@@ -50,7 +69,7 @@ app.post('/stream', async (req, res) => {
         chat_history: body.history,
       }),
       new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Operation timed out')), 290000)
+        setTimeout(() => reject(new Error("Operation timed out")), 290000)
       ),
     ]);
 
@@ -61,11 +80,11 @@ app.post('/stream', async (req, res) => {
     console.error(err);
     sendData(
       JSON.stringify({
-        error: err instanceof Error ? err.message : 'An error occurred',
+        error: err instanceof Error ? err.message : "An error occurred",
       })
     );
   } finally {
-    sendData('[DONE]');
+    sendData("[DONE]");
     res.end();
   }
 });
