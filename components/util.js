@@ -6,6 +6,7 @@ const { VectorDBQAChain } = require('langchain/chains');
 const { initializeAgentExecutorWithOptions } = require('langchain/agents'); 
 const { PromptTemplate } = require('langchain/prompts'); 
 const { ChainTool } = require('langchain/tools'); 
+const {systemTemplate} = require('./utilsPrompts')
 
 // Assuming these values are used to interact with Azure OpenAI
 const azureOpenAIKey = '143bedd78b51497f894c7bf36d4aadcf'; // Replace with actual key

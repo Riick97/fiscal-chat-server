@@ -11,7 +11,7 @@ app.use(bodyParser.raw({ type: 'application/json' }));
 app.get("/", (req, res) => {
   res.json({ message: "Welcome to your Node.js server!" });
  });
- 
+
 // Endpoint for handling streaming
 app.post('/stream', async (req, res) => {
   // Set headers for Server-Sent Events (SSE)
