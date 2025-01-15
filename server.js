@@ -59,8 +59,10 @@ app.post("/stream", async (req, res) => {
     return;
   }
 
+  const debugMode = false;
+
   // Create TokenEmitter and handle streaming
-  const tokenEmmitter = await getTokenEmmiter(sendTokenToClient);
+  const tokenEmmitter = await getTokenEmmiter(sendTokenToClient, debugMode);
 
   try {
     const result = await Promise.race([

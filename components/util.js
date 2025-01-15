@@ -15,7 +15,8 @@ const azureDeploymentName = "analyze-your-data"; // Replace with actual deployme
 const azureEmbeddingsDeploymentName = "analyze-your-data-embeddings"; // Replace with actual embeddings deployment name
 
 // Your actual token emitter function
-export const getTokenEmmiter = async (onTokenStream) => {
+export const getTokenEmmiter = async (onTokenStream, debugMode) => {
+
   // Create a ChatOpenAI instance for the model
   const chatModel = new ChatOpenAI({
     azureOpenAIApiKey: azureOpenAIKey,
@@ -57,7 +58,9 @@ export const getTokenEmmiter = async (onTokenStream) => {
 
   // Initialize the agent with options for running tasks
   const executor = await initializeAgentExecutorWithOptions(tools, chatModel, {
-    agentType: "openai-functions",
+    agentType: debugMode
+      ? "chat-zero-shot-react-description"
+      : "openai-functions", // for: debug mode
     verbose: true,
   });
 
@@ -110,5 +113,3 @@ export const getTokenEmmiter = async (onTokenStream) => {
     },
   };
 };
-
-
