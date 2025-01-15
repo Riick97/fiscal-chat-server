@@ -1,7 +1,7 @@
-const express = require("express");
-const bodyParser = require("body-parser");
-const cors = require("cors");
-const { getTokenEmmiter } = require("./components/util");
+import express from "express";
+import bodyParser from "body-parser";
+import cors from "cors";
+import { getTokenEmmiter } from "./components/util.js"; // Note the .js extension
 
 const app = express();
 const port = 3000; // You can change this as needed
