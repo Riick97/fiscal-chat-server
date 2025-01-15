@@ -34,10 +34,10 @@ app.post("/stream", async (req, res) => {
   res.writeHead(200, {
     "Content-Type": "text/event-stream",
     "Cache-Control": "no-cache, no-transform",
-    Connection: "keep-alive",
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Methods": "POST, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type",
+    Connection: "keep-alive",
   });
 
   const sendData = (data) => {
@@ -59,10 +59,11 @@ app.post("/stream", async (req, res) => {
     return;
   }
 
-  const debugMode = false;
-
   // Create TokenEmitter and handle streaming
-  const tokenEmmitter = await getTokenEmmiter(sendTokenToClient, debugMode);
+  const tokenEmmitter = await getTokenEmmiter(
+    sendTokenToClient,
+    body.debugMode
+  );
 
   try {
     const result = await Promise.race([

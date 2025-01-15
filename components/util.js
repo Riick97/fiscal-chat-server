@@ -16,7 +16,6 @@ const azureEmbeddingsDeploymentName = "analyze-your-data-embeddings"; // Replace
 
 // Your actual token emitter function
 export const getTokenEmmiter = async (onTokenStream, debugMode) => {
-
   // Create a ChatOpenAI instance for the model
   const chatModel = new ChatOpenAI({
     azureOpenAIApiKey: azureOpenAIKey,
