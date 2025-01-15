@@ -21,9 +21,10 @@ If you fall into a cycle of more than 20 calls end it and tell the user you coul
 
 U heeft toegang tot dit document voor navraag. use the Algemene inhoudsopgave to find you way through the document.
 
- '''
+'''
 http://www.hbnlawtax.com
 '''
+
 ©2020 Stichting Publicaties HBN Law & Tax
 
 Alle rechten voorbehouden
