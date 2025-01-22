@@ -1,3 +1,4 @@
+import "dotenv/config";
 import express from "express";
 import bodyParser from "body-parser";
 import cors from "cors";
@@ -62,7 +63,10 @@ app.post("/stream", async (req, res) => {
   // Create TokenEmitter and handle streaming
   const tokenEmmitter = await getTokenEmmiter(
     sendTokenToClient,
-    body.debugMode
+    body.chatMode,
+    body.option2,
+    body.option3,
+    body.option4
   );
 
   try {

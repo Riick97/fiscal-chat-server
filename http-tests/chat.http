@@ -1,9 +1,14 @@
+###
 POST http://localhost:3000/stream HTTP/1.1
 content-type: application/json
 
 {
     "question":"hello",
-    "history": ["hello"]
+    "history": ["hello"],
+    "chatMode": "internet",
+    "option2": "IB",
+    "option3": "LV",
+    "option4": "FORM"
 }
 
 ###

@@ -6,7 +6,8 @@ import { VectorDBQAChain } from "langchain/chains";
 import { initializeAgentExecutorWithOptions } from "langchain/agents";
 import { PromptTemplate } from "langchain/prompts";
 import { ChainTool } from "langchain/tools";
-import { systemTemplate } from "./utilsPrompts.js"; // Note: .js extension is required
+import { getSystemTemplate } from "./utilsPrompts.js"; // Note: .js extension is required
+import { SerpAPI } from "langchain/tools";
 
 // Assuming these values are used to interact with Azure OpenAI
 const azureOpenAIKey = "143bedd78b51497f894c7bf36d4aadcf"; // Replace with actual key
@@ -15,7 +16,13 @@ const azureDeploymentName = "analyze-your-data"; // Replace with actual deployme
 const azureEmbeddingsDeploymentName = "analyze-your-data-embeddings"; // Replace with actual embeddings deployment name
 
 // Your actual token emitter function
-export const getTokenEmmiter = async (onTokenStream, debugMode) => {
+export const getTokenEmmiter = async (
+  onTokenStream,
+  chatMode,
+  option2,
+  option3,
+  option4
+) => {
   // Create a ChatOpenAI instance for the model
   const chatModel = new ChatOpenAI({
     azureOpenAIApiKey: azureOpenAIKey,
@@ -45,6 +52,8 @@ export const getTokenEmmiter = async (onTokenStream, debugMode) => {
   // Create a VectorDBQAChain from the vector store
   const vectorDBChainTool = VectorDBQAChain.fromLLM(chatModel, vectorstore);
 
+  const internetTool = new SerpAPI();
+
   // Create a ChainTool for specific tasks
   const qaTool = new ChainTool({
     name: "Fiscale-wettenbundel-Curacao-2020",
@@ -52,16 +61,40 @@ export const getTokenEmmiter = async (onTokenStream, debugMode) => {
     chain: vectorDBChainTool,
   });
 
-  // Other tools to integrate (you can add other tools as required)
-  const tools = [qaTool]; // Add other tools if needed
+  // Function to get tools based on option
+  const getTools = (option = "") => {
+    // Convert option to lowercase for case-insensitive comparison
+    const normalizedOption = option.toLowerCase();
+
+    switch (normalizedOption) {
+      case "wetbundel":
+        return [qaTool];
+      case "internet":
+        return [internetTool];
+      case "combinatie":
+        return [qaTool, internetTool];
+      case "debugging":
+        return [qaTool];
+      default:
+        // Default to qaTool when option is empty or not recognized
+        return [qaTool];
+    }
+  };
+
+  const tools = getTools(chatMode);
 
   // Initialize the agent with options for running tasks
   const executor = await initializeAgentExecutorWithOptions(tools, chatModel, {
-    agentType: debugMode
-      ? "chat-zero-shot-react-description"
-      : "openai-functions", // for: debug mode
+    agentType:
+      chatMode !== "debugging"
+        ? "chat-zero-shot-react-description"
+        : "openai-functions", // for: debug mode
     verbose: true,
   });
+
+  const systemTemplate = getSystemTemplate(chatMode, option2, option3, option4);
+
+  // console.log("System template:", systemTemplate);
 
   // Set up a prompt template
   const promptTemplate = PromptTemplate.fromTemplate(
