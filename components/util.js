@@ -64,7 +64,7 @@ export const getTokenEmmiter = async (
   // Function to get tools based on option
   const getTools = (option = "") => {
     // Convert option to lowercase for case-insensitive comparison
-    const normalizedOption = option.toLowerCase();
+    const normalizedOption = option?.toLowerCase();
 
     switch (normalizedOption) {
       case "wetbundel":
