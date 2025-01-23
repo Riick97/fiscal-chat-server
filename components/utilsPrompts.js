@@ -24,6 +24,8 @@ export function getSystemTemplate(
         templates.push(promptTemplateChatModeWetbundel);
     }
 
+    console.log("templates", templates[0]);
+
     console.log("TaxType", taxType);
 
     if (taxType) {
