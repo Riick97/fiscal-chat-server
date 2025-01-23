@@ -8,7 +8,7 @@ export function getSystemTemplate(
     // Generate specific templates based on provided parameters
     let templates = [promptTemplateIdentity];
 
-    // console.log("ChatMode", chatMode);
+    console.log("ChatMode", chatMode);
 
     if (chatMode) {
       if (chatMode === "internet") {
@@ -24,7 +24,7 @@ export function getSystemTemplate(
         templates.push(promptTemplateChatModeWetbundel);
     }
 
-    // console.log("TaxType", taxType);
+    console.log("TaxType", taxType);
 
     if (taxType) {
       const taxTemplate = generateTaxTypeTemplate(taxType);
@@ -32,7 +32,7 @@ export function getSystemTemplate(
       templates.push("\n### Tax Type Specific Instructions\n" + taxTemplate);
     }
 
-    // console.log("LegalInstrumentType", legalInstrumentType);
+    console.log("LegalInstrumentType", legalInstrumentType);
 
     if (legalInstrumentType) {
       const legalTemplate =
@@ -43,7 +43,7 @@ export function getSystemTemplate(
       );
     }
 
-    // console.log("TopicSubjectMatter", topicSubjectMatter);
+    console.log("TopicSubjectMatter", topicSubjectMatter);
 
     if (topicSubjectMatter) {
       const topicTemplate = generateTopicTemplate(topicSubjectMatter);
