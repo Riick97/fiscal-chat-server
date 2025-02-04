@@ -101,6 +101,7 @@ export const getTokenEmmiter = async (
     `Task: {question}\n\n${systemTemplate}\n\nChat History: {history}`
   );
 
+  console.log({promptTemplate});
   // Return a caller object that handles the execution logic
   return {
     async call({ question, chat_history }) {
