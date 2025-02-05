@@ -87,7 +87,7 @@ export const getTokenEmmiter = async (
   const executor = await initializeAgentExecutorWithOptions(tools, chatModel, {
     agentType:
       chatMode === "debugging"
-        ? "chat-zero-shot-react-description"
+        ? "zero-shot-react-description"
         : "openai-functions", // for: debug mode
     verbose: true,
   });

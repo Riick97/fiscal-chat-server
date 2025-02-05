@@ -37,7 +37,7 @@ app.post("/stream", async (req, res) => {
   res.writeHead(200, {
     "Content-Type": "text/event-stream",
     "Cache-Control": "no-cache, no-transform",
-   
+
     Connection: "keep-alive",
   });
 
@@ -46,6 +46,7 @@ app.post("/stream", async (req, res) => {
   };
 
   const sendTokenToClient = (token) => {
+    console.log({ token });
     sendData(JSON.stringify({ data: token }));
   };
 

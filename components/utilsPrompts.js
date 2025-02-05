@@ -134,7 +134,7 @@ Onthoud: Zelfs als de gebruiker in een andere taal communiceert, blijf je ALTIJD
     [Conclusie]
     ©2020 Stichting Publicaties HBN Law & Tax - Alle rechten voorbehouden."
     `;
-    const result = finalTemplate + footer;
+    const result = finalTemplate;
     return result;
   } catch (error) {
     return `Error generating template: ${error.message}`;
