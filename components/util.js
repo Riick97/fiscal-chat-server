@@ -1,19 +1,44 @@
 import path from "path";
-import { ChatOpenAI } from "langchain/chat_models/openai";
+import { AzureOpenAI } from "openai";
 import { HNSWLib } from "langchain/vectorstores/hnswlib";
 import { OpenAIEmbeddings } from "langchain/embeddings/openai";
 import { VectorDBQAChain } from "langchain/chains";
 import { initializeAgentExecutorWithOptions } from "langchain/agents";
 import { PromptTemplate } from "langchain/prompts";
 import { ChainTool } from "langchain/tools";
-import { getSystemTemplate } from "./utilsPrompts.js"; // Note: .js extension is required
+import { getSystemTemplate } from "./utilsPrompts.js";
 import { SerpAPI } from "langchain/tools";
+import dotenv from "dotenv";
 
-// Assuming these values are used to interact with Azure OpenAI
-const azureOpenAIKey = "143bedd78b51497f894c7bf36d4aadcf"; // Replace with actual key
-const azureInstanceName = "CAEDAOIPOCAOA07"; // Replace with actual instance name
-const azureDeploymentName = "analyze-your-data"; // Replace with actual deployment name
-const azureEmbeddingsDeploymentName = "analyze-your-data-embeddings"; // Replace with actual embeddings deployment name
+// Load environment variables
+dotenv.config();
+
+// Azure OpenAI configuration
+const azureOpenAIKey = process.env.AZURE_OPENAI_API_KEY;
+const azureEndpoint = process.env.AZURE_OPENAI_ENDPOINT;
+const azureApiVersion =
+  process.env.AZURE_OPENAI_API_VERSION || "2024-04-01-preview";
+const azureDeploymentName =
+  process.env.AZURE_OPENAI_DEPLOYMENT_NAME || "gpt-4.1";
+const azureEmbeddingsDeploymentName =
+  process.env.AZURE_OPENAI_EMBEDDINGS_DEPLOYMENT_NAME ||
+  "text-embedding-ada-002";
+const azureModelName = process.env.AZURE_OPENAI_MODEL_NAME || "gpt-4.1";
+
+// Validate required environment variables
+if (!azureOpenAIKey || !azureEndpoint) {
+  throw new Error(
+    "Missing required Azure OpenAI environment variables. Please check your .env file."
+  );
+}
+
+// Create Azure OpenAI client
+const azureClient = new AzureOpenAI({
+  endpoint: azureEndpoint,
+  apiKey: azureOpenAIKey,
+  deployment: azureDeploymentName,
+  apiVersion: azureApiVersion,
+});
 
 // Your actual token emitter function
 export const getTokenEmmiter = async (
@@ -23,16 +48,6 @@ export const getTokenEmmiter = async (
   option3,
   option4
 ) => {
-  // Create a ChatOpenAI instance for the model
-  const chatModel = new ChatOpenAI({
-    azureOpenAIApiKey: azureOpenAIKey,
-    azureOpenAIApiVersion: "2023-07-01-preview",
-    azureOpenAIApiInstanceName: azureInstanceName,
-    azureOpenAIApiDeploymentName: azureDeploymentName,
-    temperature: 0,
-    streaming: true,
-  });
-
   // Set up the vector store (assumes you have a vector store directory)
   const dir = path.resolve(process.cwd(), "data");
   const vectorstore = await HNSWLib.load(
@@ -43,69 +58,50 @@ export const getTokenEmmiter = async (
       timeout: 1000,
       modelName: "text-embedding-ada-002",
       azureOpenAIApiKey: azureOpenAIKey,
-      azureOpenAIApiVersion: "2023-07-01-preview",
-      azureOpenAIApiInstanceName: azureInstanceName,
+      azureOpenAIApiVersion: azureApiVersion,
+      azureOpenAIApiInstanceName: azureEndpoint
+        .replace("https://", "")
+        .replace(".cognitiveservices.azure.com/", ""),
       azureOpenAIApiDeploymentName: azureEmbeddingsDeploymentName,
     })
   );
 
-  // Create a VectorDBQAChain from the vector store
-  const vectorDBChainTool = VectorDBQAChain.fromLLM(chatModel, vectorstore);
-
-  const internetTool = new SerpAPI();
-
-  // Create a ChainTool for specific tasks
-  const qaTool = new ChainTool({
-    name: "Fiscale-wettenbundel-Curacao-2020",
-    description: `This tool provides access to the Fiscale wettenbundel Curacao 2020. Use it to retrieve specific information about the tax law for the user. use the Algemene inhoudsopgave to find your way through the document.`,
-    chain: vectorDBChainTool,
-  });
-
-  // Function to get tools based on option
-  const getTools = (option = "") => {
-    // Convert option to lowercase for case-insensitive comparison
-    const normalizedOption = option?.toLowerCase();
-
-    switch (normalizedOption) {
-      case "wetbundel":
-        return [qaTool];
-      case "internet":
-        return [internetTool];
-      case "combinatie":
-        return [qaTool, internetTool];
-      case "debugging":
-        return [qaTool];
-      default:
-        // Default to qaTool when option is empty or not recognized
-        return [qaTool];
+  // Function to search vector store
+  const searchVectorStore = async (query) => {
+    try {
+      const results = await vectorstore.similaritySearch(query, 5);
+      return results.map((doc) => doc.pageContent).join("\n\n");
+    } catch (error) {
+      console.error("Vector store search error:", error);
+      return "";
     }
   };
 
-  const tools = getTools(chatMode);
+  // Function to get tools based on option
+  const getToolsInfo = (option = "") => {
+    const normalizedOption = option?.toLowerCase();
+    return {
+      hasVectorTool: ["wetbundel", "combinatie", "debugging", ""].includes(
+        normalizedOption
+      ),
+      hasInternetTool: ["internet", "combinatie"].includes(normalizedOption),
+    };
+  };
 
-  // Initialize the agent with options for running tasks
-  const executor = await initializeAgentExecutorWithOptions(tools, chatModel, {
-    agentType:
-      chatMode === "debugging"
-        ? "zero-shot-react-description"
-        : "openai-functions", // for: debug mode
-    verbose: true,
-  });
-
+  const toolsInfo = getToolsInfo(chatMode);
   const systemTemplate = getSystemTemplate(chatMode, option2, option3, option4);
-
-  // console.log("System template:", systemTemplate);
 
   // Set up a prompt template
   const promptTemplate = PromptTemplate.fromTemplate(
     `Task: {question}\n\n${systemTemplate}\n\nChat History: {history}`
   );
 
-  console.log({promptTemplate});
+  console.log({ promptTemplate });
+
   // Return a caller object that handles the execution logic
   return {
     async call({ question, chat_history }) {
-      // Format the chat history as required by the model
+      // Format the chat history
       const prefixMessages = chat_history
         .map((message) => [
           {
@@ -119,26 +115,59 @@ export const getTokenEmmiter = async (
         ])
         .flat();
 
-      // Format the chat prompt using the prompt template
+      // Search vector store if needed
+      let contextFromVectorStore = "";
+      if (toolsInfo.hasVectorTool) {
+        contextFromVectorStore = await searchVectorStore(question);
+      }
+
+      // Format the prompt
       const formattedChatPrompt = await promptTemplate.format({
         question: question,
         history: JSON.stringify(prefixMessages),
       });
 
+      // Prepare messages for Azure OpenAI
+      const messages = [
+        {
+          role: "system",
+          content: `${formattedChatPrompt}${
+            contextFromVectorStore
+              ? `\n\nContext from Fiscal Law Database:\n${contextFromVectorStore}`
+              : ""
+          }`,
+        },
+        ...prefixMessages,
+        {
+          role: "user",
+          content: question,
+        },
+      ];
+
       try {
-        // Run the model and stream the tokens
-        const result = await executor.run(formattedChatPrompt, {
-          callbacks: [
-            {
-              handleLLMNewToken(token) {
-                // Forward each new token to the client
-                onTokenStream(token);
-              },
-            },
-          ],
+        // Use Azure OpenAI streaming
+        const stream = await azureClient.chat.completions.create({
+          model: azureModelName,
+          messages: messages,
+          max_tokens: 13107,
+          temperature: 0,
+          top_p: 1,
+          frequency_penalty: 0,
+          presence_penalty: 0,
+          stream: true,
         });
 
-        return result;
+        let fullResponse = "";
+
+        for await (const chunk of stream) {
+          if (chunk.choices[0]?.delta?.content) {
+            const token = chunk.choices[0].delta.content;
+            fullResponse += token;
+            onTokenStream(token);
+          }
+        }
+
+        return fullResponse;
       } catch (error) {
         console.error("Error executing the task:", error);
         throw error;

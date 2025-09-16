@@ -7,7 +7,7 @@ import cors from "cors";
 import { getTokenEmmiter } from "./components/util.js"; // Note the .js extension
 
 const app = express();
-const port = 3001; // You can change this as needed
+const port = process.env.PORT || 3001; // Use environment variable or default to 3000
 
 // CORS configuration
 const corsOptions = {
